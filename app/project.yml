@@ -36,7 +36,7 @@ settings:
     # The app's link scheme (Shared/DshLink.swift): the widgets and the share extension open the app with it.
     # A side-by-side test build takes its own, or its links can land in the installed app.
     DSH_URL_SCHEME: dsh
-targets:
+    targets:
   DshIOS:
     type: application
     platform: iOS
@@ -48,10 +48,8 @@ targets:
         com.apple.security.application-groups:
           - group.com.chenxuanjian9.dsh
     sources:
-sources:
       - path: WorseQuery.swift
       - path: DshIOS
-    
       - path: Shared
       # What the phone sends the watch and what the watch sends back.
       - path: WatchShared
@@ -74,7 +72,7 @@ sources:
       # ffmpeg and ffprobe for the engine, one thread per run: linked binding `dsh_ffmpeg`.
       # Only the binding: tool.c and the rest of native/ffmpeg go into FFmpeg.framework.
       - path: ../native/ffmpeg/binding.c
-      dependencies:
+    dependencies:
       # First: the app's own libc calls (libgit2) bind to it by link order, as Node's do by its load command.
       - target: DshRoot
       - framework: ../vendor/nodejs-mobile/rooted/NodeMobile.xcframework
