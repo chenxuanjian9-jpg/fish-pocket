@@ -279,7 +279,6 @@ private struct EngineTrouble: View {
 
 }
 
-}
 class EngineConnection: ObservableObject {
     static let shared = EngineConnection()
     
