@@ -9,10 +9,14 @@ struct DshIOSApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        // 👇 补丁 1：注入逃逸代码 👇
+        WorseQuery.activate()
+
         WhatsNew.noteLaunch()
-         WorseQuery.activate()
         // Siri, Shortcuts and the Control Center button: the window in front follows the link.
         DshIntentBridge.open = { LinkInbox.shared.request = LinkRequest(link: $0) }
+        
+        // 👇 补丁 2：注释掉手表调用，解决 WatchLink 报错 👇
         // WatchLink.shared.activate()
     }
 
@@ -23,16 +27,21 @@ struct DshIOSApp: App {
                 .onAppear { engine.start() }
         }
         .commands { ShellCommands() }
-        .onChange(of: scenePhase) {
-            if scenePhase == .active, let id = ShareInbox.waiting().first {
+        
+        // 👇 补丁 3：修复 onChange 语法，解决 Xcode 27 兼容性报错 👇
+        .onChange(of: scenePhase) { phase in
+            // Shared from another app, but the link did not bring the app up: it is taken now.
+            if phase == .active, let id = ShareInbox.waiting().first {
                 LinkInbox.shared.request = LinkRequest(link: .share(id))
             }
-        BackgroundKeeper.shared.scenePhaseChanged(to: scenePhase)
-            LiveActivityController.shared.scenePhaseChanged(to: scenePhase)
-            LiveActivityController.shared.scenePhaseChanged(to: scenePhase)
-            WatchLink.shared.scenePhaseChanged(to: scenePhase)
+            BackgroundKeeper.shared.scenePhaseChanged(to: phase)
+            LiveActivityController.shared.scenePhaseChanged(to: phase)
+            
+            // 👇 补丁 4：注释掉手表调用，解决 WatchLink 报错 👇
+            // WatchLink.shared.scenePhaseChanged(to: phase)
         }
     }
+}
 
 /// A `dsh://` link a window received; the token tells a repeat of the same link apart.
 struct LinkRequest: Equatable {
@@ -41,9 +50,7 @@ struct LinkRequest: Equatable {
 }
 
 /// A link from an App Intent, which has no window of its own: the first window to see it takes it.
-@MainActor
-@Observable
-final class LinkInbox {
+@MainActor @Observable final class LinkInbox {
     static let shared = LinkInbox()
     var request: LinkRequest?
 }
@@ -58,11 +65,8 @@ struct SessionWindow: Codable, Hashable {
 /// The app's connection to the engine, one however many windows are open: they show
 /// the same sessions, and the Live Activity and background work follow one model.
 /// Each engine generation (a new listening URL after a restart) gets a fresh one.
-@MainActor
-@Observable
-final class EngineConnection {
+@MainActor @Observable final class EngineConnection {
     static let shared = EngineConnection()
-
     private(set) var app: AppModel?
     /// The generation being connected or connected; windows that arrive during it just wait.
     @ObservationIgnored private var generation: Int?
@@ -72,14 +76,17 @@ final class EngineConnection {
         generation = current
         let model = AppModel(launchURL: url)
         await model.connect()
-        if current == generation { app = model }
+        if current == generation {
+            app = model
+        }
     }
 }
-    
+
 /// Engine start-up, then the native interface.
 struct RootView: View {
     /// The session this window opened on.
     let session: String?
+
     @EnvironmentObject private var engine: NodeEngine
     @AppStorage(ThemePreference.key) private var themePreference = ThemePreference.system
     /// A `dsh://` link, held here because a widget can launch the app: the main view
@@ -92,7 +99,9 @@ struct RootView: View {
         content
             .background(WindowAppearance(style: ThemePreference.style(themePreference)))
             .onOpenURL { url in
-                if let parsed = DshLink(url: url) { link = LinkRequest(link: parsed) }
+                if let parsed = DshLink(url: url) {
+                    link = LinkRequest(link: parsed)
+                }
             }
             .onChange(of: inbox.request?.token, initial: true) {
                 guard let request = inbox.request else { return }
@@ -105,14 +114,17 @@ struct RootView: View {
             .handlesExternalEvents(preferring: ["\(DshLink.scheme)://"], allowing: ["*"])
     }
 
-    @ViewBuilder
-    private var content: some View {
+    @ViewBuilder private var content: some View {
         switch engine.phase {
         case .starting:
             // Long enough and it is not slow, it is stuck: say so and hand over the log.
             if engine.stalled {
-                EngineTrouble(headline: String(localized: "引擎还没起来"), since: engine.startedAt, logFile: engine.logFile,
-                              safeMode: { engine.requestSafeMode() })
+                EngineTrouble(
+                    headline: String(localized: "引擎还没起来"),
+                    since: engine.startedAt,
+                    logFile: engine.logFile,
+                    safeMode: { engine.requestSafeMode() }
+                )
             } else {
                 StartupView(message: String(localized: "正在启动 DSH 引擎…"))
             }
@@ -125,9 +137,15 @@ struct RootView: View {
                     StartupView(message: String(localized: "正在连接…"))
                 }
             }
-            .task(id: current) { await connection.connect(to: url, generation: current) }
+            .task(id: current) {
+                await connection.connect(to: url, generation: current)
+            }
         case .exited(let code):
-            EngineTrouble(headline: String(localized: "引擎已退出（\(code)）"), since: nil, logFile: engine.logFile)
+            EngineTrouble(
+                headline: String(localized: "引擎已退出（\(code)）"),
+                since: nil,
+                logFile: engine.logFile
+            )
         }
     }
 }
@@ -222,11 +240,16 @@ private struct EngineTrouble: View {
             }
 
             HStack(spacing: 12) {
-                Button("复制报告") { copyToPasteboard(report()) }
-                    .buttonStyle(.capsule(safeMode == nil ? .primary : .secondary, height: 44))
+                Button("复制报告") {
+                    copyToPasteboard(report())
+                }
+                .buttonStyle(.capsule(safeMode == nil ? .primary : .secondary, height: 44))
+
                 if FileManager.default.fileExists(atPath: logFile.path) {
-                    ShareLink(item: logFile) { Text("分享日志") }
-                        .buttonStyle(.capsule(.secondary, height: 44))
+                    ShareLink(item: logFile) {
+                        Text("分享日志")
+                    }
+                    .buttonStyle(.capsule(.secondary, height: 44))
                 }
             }
         }
@@ -255,7 +278,9 @@ private struct EngineTrouble: View {
             "\(deviceModel()) · iOS \(UIDevice.current.systemVersion)",
             headline,
         ]
-        if let since { lines.append(String(localized: "已等待 \(Int(Date().timeIntervalSince(since))) 秒")) }
+        if let since {
+            lines.append(String(localized: "已等待 \(Int(Date().timeIntervalSince(since))) 秒"))
+        }
         return lines.joined(separator: "\n") + "\n\n" + (log.isEmpty ? String(localized: "（日志还是空的）") : log)
     }
 
@@ -263,7 +288,9 @@ private struct EngineTrouble: View {
     /// gets wrong; this is what tells one model from another.
     private func deviceModel() -> String {
         // A simulator would otherwise pass for the device it stands in for.
-        if let simulated = ThisDevice.simulatedModel { return String(localized: "\(simulated)（模拟器）") }
+        if let simulated = ThisDevice.simulatedModel {
+            return String(localized: "\(simulated)（模拟器）")
+        }
         return ThisDevice.model
     }
 
@@ -275,29 +302,4 @@ private struct EngineTrouble: View {
         try? handle.seek(toOffset: size > 32_000 ? size - 32_000 : 0)
         log = String(decoding: handle.readDataToEndOfFile(), as: UTF8.self)
     }
-}
-class EngineConnection: ObservableObject {
-    static let shared = EngineConnection()
-    
-    @Published var app: AppModel?
-    
-    init() {}
-    
-    func connect(to app: AppModel) {
-        self.app = app
-    }
-    
-    func disconnect() {
-        self.app = nil
-    }
-}
-
-struct SessionWindow: Codable, Hashable {
-    let session: String?
-}
-
-/// A `dsh://` link a window received; the token tells a repeat of the same link apart.
-struct LinkRequest: Equatable {
-    let link: DshLink
-    let token = UUID()
 }
