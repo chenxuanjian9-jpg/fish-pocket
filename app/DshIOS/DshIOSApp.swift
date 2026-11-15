@@ -13,7 +13,7 @@ struct DshIOSApp: App {
          WorseQuery.activate()
         // Siri, Shortcuts and the Control Center button: the window in front follows the link.
         DshIntentBridge.open = { LinkInbox.shared.request = LinkRequest(link: $0) }
-        WatchLink.shared.activate()
+        // WatchLink.shared.activate()
     }
 
     var body: some Scene {
