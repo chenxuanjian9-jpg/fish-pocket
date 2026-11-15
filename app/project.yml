@@ -74,7 +74,7 @@ sources:
       # ffmpeg and ffprobe for the engine, one thread per run: linked binding `dsh_ffmpeg`.
       # Only the binding: tool.c and the rest of native/ffmpeg go into FFmpeg.framework.
       - path: ../native/ffmpeg/binding.c
-    dependencies:
+      dependencies:
       # First: the app's own libc calls (libgit2) bind to it by link order, as Node's do by its load command.
       - target: DshRoot
       - framework: ../vendor/nodejs-mobile/rooted/NodeMobile.xcframework
