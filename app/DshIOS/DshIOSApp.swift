@@ -75,7 +75,7 @@ final class EngineConnection {
         if current == generation { app = model }
     }
 }
-
+    
 /// Engine start-up, then the native interface.
 struct RootView: View {
     /// The session this window opened on.
@@ -278,19 +278,7 @@ private struct EngineTrouble: View {
 }
 
 }
-class EngineConnection: ObservableObject {
-    static let shared = EngineConnection()
     
-    @Published var app: AppModel?
-    
-    func connect(to app: AppModel) {
-        self.app = app
-    }
-    
-    func disconnect() {
-        self.app = nil
-    }
-}
 class EngineConnection: ObservableObject {
     static let shared = EngineConnection()
     
