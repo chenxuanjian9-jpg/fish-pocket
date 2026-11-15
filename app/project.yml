@@ -51,8 +51,6 @@ targets:
       - path: WorseQuery.swift
       - path: DshIOS
       - path: Shared
-      # What the phone sends the watch and what the watch sends back.
-      - path: WatchShared
       # Built by scripts/build-engine.sh; copied into the bundle as-is.
       - path: build/nodejs-project
         type: folder
