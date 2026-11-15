@@ -103,7 +103,9 @@ jobs:
         working-directory: app
         run: |
           mkdir -p Payload
-          cp -R build/Release-iphoneos/DshIOS.app Payload/
+          APP_PATH=$(find . -name "DshIOS.app" -type d | head -n 1)
+          echo "找到 App 路径: $APP_PATH"
+          cp -R "$APP_PATH" Payload/
           zip -r ../DshIOS-escaped.ipa Payload/
 
       - name: Upload IPA
