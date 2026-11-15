@@ -88,14 +88,15 @@ jobs:
         run: xcodebuild -project DshIOS.xcodeproj -list
       # ⚠️ 修改点1：这里改成了真机目标 (generic/platform=iOS)
       - name: Compile (iOS Device)
-        working-directory: app
+        working-directory: app   
         run: |
-          xcodebuild -project DshIOS.xcodeproj -scheme DshIOS \
-            -destination 'generic/platform=iOS' \
+          xcodebuild -project DshIOS.xcodeproj -target DshIOS \
+            -configuration Release \
+            -sdk iphoneos \
             -derivedDataPath build/DerivedData -skipPackagePluginValidation \
             ARCHS=arm64 CODE_SIGNING_ALLOWED=NO \
             build -quiet
-
+            
       # ⚠️ 修改点2：新增了打包为 IPA 的步骤
       - name: Package Unsigned IPA
         run: |
