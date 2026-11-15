@@ -276,9 +276,6 @@ private struct EngineTrouble: View {
         log = String(decoding: handle.readDataToEndOfFile(), as: UTF8.self)
     }
 }
-
-}
-
 class EngineConnection: ObservableObject {
     static let shared = EngineConnection()
     
