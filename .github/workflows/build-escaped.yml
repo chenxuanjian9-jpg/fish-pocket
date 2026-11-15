@@ -89,9 +89,9 @@ jobs:
       - name: Compile (iOS Device)
         working-directory: app
         run: |
-          xcodebuild -project DshIOS.xcodeproj -target DshIOS \
-            -configuration Release \
-            -sdk iphoneos \
+          xcodebuild -resolvePackageDependencies -project DshIOS.xcodeproj -scheme DshIOS
+          xcodebuild -project DshIOS.xcodeproj -scheme DshIOS \
+            -destination 'generic/platform=iOS' \
             -skipPackagePluginValidation \
             ARCHS=arm64 CODE_SIGNING_ALLOWED=NO \
             build
