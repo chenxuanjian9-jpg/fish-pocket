@@ -1,0 +1,112 @@
+name: Build Custom IPA
+
+on:
+  workflow_dispatch: # 只有你手动点击时才会运行
+
+jobs:
+  build:
+    runs-on: xcode-27
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: engine/package-lock.json
+
+      - name: Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_27.2.app
+          xcodebuild -version
+
+      - name: Cache nodejs-mobile
+        id: nodejs-mobile
+        uses: actions/cache@v5
+        with:
+          path: |
+            vendor/nodejs-mobile/ios
+            vendor/nodejs-mobile/rooted
+          key: nodejs-mobile-${{ hashFiles('scripts/fetch-nodejs-mobile.sh') }}
+
+      - name: Fetch nodejs-mobile
+        if: steps.nodejs-mobile.outputs.cache-hit != 'true'
+        run: scripts/fetch-nodejs-mobile.sh
+
+      - name: Cache Python
+        id: python
+        uses: actions/cache@v5
+        with:
+          path: |
+            vendor/python/ios
+            vendor/python/rooted
+          key: python-${{ hashFiles('scripts/fetch-python.sh') }}
+
+      - name: Fetch Python
+        if: steps.python.outputs.cache-hit != 'true'
+        run: scripts/fetch-python.sh
+
+      - name: Check NodeMobile imports
+        run: scripts/check-root-imports.sh
+
+      - name: Cache libgit2
+        id: libgit2
+        uses: actions/cache@v5
+        with:
+          path: |
+            vendor/libgit2/Libgit2.xcframework
+            vendor/libgit2/ios-arm64
+            vendor/libgit2/ios-arm64-simulator
+            vendor/libgit2/macos
+          key: libgit2-${{ runner.os }}-${{ hashFiles('scripts/build-libgit2.sh') }}
+
+      - name: Build libgit2
+        if: steps.libgit2.outputs.cache-hit != 'true'
+        run: scripts/build-libgit2.sh
+
+      - name: Cache FFmpeg
+        id: ffmpeg
+        uses: actions/cache@v5
+        with:
+          path: vendor/ffmpeg/FFmpeg.xcframework
+          key: ffmpeg-${{ runner.os }}-${{ hashFiles('scripts/fetch-ffmpeg.sh', 'scripts/build-ffmpeg.sh', 'native/ffmpeg/**') }}
+
+      - name: Fetch FFmpeg
+        if: steps.ffmpeg.outputs.cache-hit != 'true'
+        run: scripts/fetch-ffmpeg.sh
+
+      - name: Assemble engine
+        run: scripts/build-engine.sh
+
+      - name: Generate project
+        run: |
+          command -v xcodegen >/dev/null || brew install xcodegen
+          cd app && xcodegen generate --quiet
+
+      # ⚠️ 修改点1：这里改成了真机目标 (generic/platform=iOS)
+      - name: Compile (iOS Device)
+        working-directory: app
+        run: |
+          xcodebuild -project DshIOS.xcodeproj -scheme DshIOS \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData -skipPackagePluginValidation \
+            ARCHS=arm64 CODE_SIGNING_ALLOWED=NO \
+            build -quiet
+
+      # ⚠️ 修改点2：新增了打包为 IPA 的步骤
+      - name: Package Unsigned IPA
+        run: |
+          mkdir -p Payload
+          # 寻找编译出来的 .app 文件
+          APP_PATH=$(find app/build/DerivedData/Build/Products -name "DshIOS.app" -type d | head -n 1)
+          echo "找到 App 路径: $APP_PATH"
+          cp -R "$APP_PATH" Payload/
+          zip -r DshIOS-unsigned.ipa Payload/
+
+      # ⚠️ 修改点3：将生成的 IPA 上传，供你下载
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: DshIOS-unsigned-ipa
+          path: DshIOS-unsigned.ipa
