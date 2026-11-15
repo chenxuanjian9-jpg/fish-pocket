@@ -295,7 +295,7 @@ class EngineConnection: ObservableObject {
     }
 }
 
-struct SessionWindow: Hashable {
+struct SessionWindow: Codable、Hashable {
     let session: String?
 }
 
