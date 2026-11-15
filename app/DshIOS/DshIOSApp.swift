@@ -291,3 +291,28 @@ class EngineConnection: ObservableObject {
         self.app = nil
     }
 }
+class EngineConnection: ObservableObject {
+    static let shared = EngineConnection()
+    
+    @Published var app: AppModel?
+    
+    init() {}
+    
+    func connect(to app: AppModel) {
+        self.app = app
+    }
+    
+    func disconnect() {
+        self.app = nil
+    }
+}
+
+struct SessionWindow: Hashable {
+    let session: String?
+}
+
+/// A `dsh://` link a window received; the token tells a repeat of the same link apart.
+struct LinkRequest: Equatable {
+    let link: DshLink
+    let token = UUID()
+}
