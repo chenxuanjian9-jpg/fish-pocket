@@ -278,3 +278,16 @@ private struct EngineTrouble: View {
 }
 
 }
+class EngineConnection: ObservableObject {
+    static let shared = EngineConnection()
+    
+    @Published var app: AppModel?
+    
+    func connect(to app: AppModel) {
+        self.app = app
+    }
+    
+    func disconnect() {
+        self.app = nil
+    }
+}
