@@ -27,13 +27,12 @@ struct DshIOSApp: App {
             if scenePhase == .active, let id = ShareInbox.waiting().first {
                 LinkInbox.shared.request = LinkRequest(link: .share(id))
             }
-        }
-            BackgroundKeeper.shared.scenePhaseChanged(to: phase)
-            LiveActivityController.shared.scenePhaseChanged(to: phase)
-            WatchLink.shared.scenePhaseChanged(to: phase)
+        BackgroundKeeper.shared.scenePhaseChanged(to: scenePhase)
+            LiveActivityController.shared.scenePhaseChanged(to: scenePhase)
+            LiveActivityController.shared.scenePhaseChanged(to: scenePhase)
+            WatchLink.shared.scenePhaseChanged(to: scenePhase)
         }
     }
-}
 
 /// A `dsh://` link a window received; the token tells a repeat of the same link apart.
 struct LinkRequest: Equatable {
