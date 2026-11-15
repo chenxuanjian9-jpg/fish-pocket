@@ -82,7 +82,9 @@ jobs:
       - name: Generate project
         run: |
           command -v xcodegen >/dev/null || brew install xcodegen
-          cd app && xcodegen generate --quiet
+          cd app
+          rm -rf Watch WatchShared
+          xcodegen generate --quiet
 
       - name: Compile (iOS Device)
         working-directory: app
