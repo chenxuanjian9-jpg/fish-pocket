@@ -278,7 +278,8 @@ private struct EngineTrouble: View {
 }
 
 }
-    
+
+}
 class EngineConnection: ObservableObject {
     static let shared = EngineConnection()
     
@@ -295,7 +296,7 @@ class EngineConnection: ObservableObject {
     }
 }
 
-struct SessionWindow: Codable、Hashable {
+struct SessionWindow: Codable, Hashable {
     let session: String?
 }
 
