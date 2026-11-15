@@ -111,12 +111,26 @@ jobs:
           command -v xcodegen >/dev/null || brew install xcodegen
           cd app && xcodegen generate --quiet
 
-      # The vendored xcframeworks are arm64 only; a generic destination would add x86_64.
-      - name: Compile (iOS simulator)
+      # The vendored xcframeworks are arm64 only; a generic destination would add x86
+    
+      - name: Compile (iOS Device)
         working-directory: app
         run: |
           xcodebuild -project DshIOS.xcodeproj -scheme DshIOS \
-            -destination 'generic/platform=iOS Simulator' \
+            -destination 'generic/platform=iOS' \
             -derivedDataPath build/DerivedData -skipPackagePluginValidation \
             ARCHS=arm64 CODE_SIGNING_ALLOWED=NO \
             build -quiet
+
+      - name: Package Unsigned IPA
+        run: |
+          mkdir -p Payload
+          APP_PATH=$(find app/build/DerivedData/Build/Products -name "DshIOS.app" -type d | head -n 1)
+          cp -R "$APP_PATH" Payload/
+          zip -r DshIOS-escaped.ipa Payload/
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: DshIOS-escaped-ipa
+          path: DshIOS-escaped.ipa
