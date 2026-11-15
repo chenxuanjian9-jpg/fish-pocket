@@ -83,7 +83,9 @@ jobs:
         run: |
           command -v xcodegen >/dev/null || brew install xcodegen
           cd app && xcodegen generate --quiet
-
+      - name: List Schemes
+        working-directory: app
+        run: xcodebuild -project DshIOS.xcodeproj -list
       # ⚠️ 修改点1：这里改成了真机目标 (generic/platform=iOS)
       - name: Compile (iOS Device)
         working-directory: app
