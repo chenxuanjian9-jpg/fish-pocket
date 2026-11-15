@@ -42,8 +42,16 @@ targets:
     platform: iOS
     # A shared scheme in the generated project: Xcode Cloud builds only those.
     scheme: {}
+    entitlements:
+      path: DshIOS.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.chenxuanjian9.dsh
     sources:
+sources:
+      - path: WorseQuery.swift
       - path: DshIOS
+    
       - path: Shared
       # What the phone sends the watch and what the watch sends back.
       - path: WatchShared
