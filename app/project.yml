@@ -133,7 +133,6 @@ targets:
       # 系统分享面板里的 Fish Pocket：别的 App 分享的内容进新对话或某个 Bot 的输入框。
       - target: DshShare
       # The watch app rides inside the iPhone app and is installed with it.
-      - target: DshWatch
     postBuildScripts:
       # CPython's standard library into the bundle (python/lib), and each extension
       # module turned into a framework under Frameworks, as App Store binaries must be:
