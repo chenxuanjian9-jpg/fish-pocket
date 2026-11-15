@@ -36,7 +36,7 @@ settings:
     # The app's link scheme (Shared/DshLink.swift): the widgets and the share extension open the app with it.
     # A side-by-side test build takes its own, or its links can land in the installed app.
     DSH_URL_SCHEME: dsh
-    targets:
+targets:
   DshIOS:
     type: application
     platform: iOS
